@@ -18,14 +18,17 @@ def make_ngrams(sentence, n):
     return ngrams
 
 
-def make_ngrams_dataset(references):
+def make_ngrams_dataset_counted(references):
+    """
+        Create counted ngrams dataset for given reference/s.
+    """
     ds = []
     for ref in references:
         for n in range(1, len(ref.split()) + 1):
             ng = make_ngrams(sentence=ref, n=n)
             if ng not in ds:
                 ds.extend(ng)
-    return ds
+    return Counter(ds)
 
 
 c = "The quick brown fox jumps over the lazy dog."
@@ -33,6 +36,9 @@ r = "A quick brown fox leaped over the lazy dog."
 
 # print(make_ngrams(sentence=c, n=1))
 # done make_ngrams
-# print(make_ngrams_dataset(references=[c]))
+# print(make_ngrams_dataset_counted(references=[c]))
 # done make_ngram_dataset
+
+# ref_ngram_ds = make_ngrams_dataset_counted(references=[r])
+# print(Counter(ref_ngram_ds))
 
