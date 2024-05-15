@@ -3,7 +3,7 @@ from collections import Counter
 import re
 
 
-def make_ngrams(sentence, n: int):
+def make_ngrams(sentence: str, n: int):
     """
     Create n-grams from a given sentence.
     Inputs:
@@ -20,23 +20,33 @@ def make_ngrams(sentence, n: int):
     return ngrams
 
 
-def make_ngrams_dataset_counted(references):
+def make_ngrams_dataset_counted(references: list):
     """
-        Create counted ngrams set dataset for given reference/s.
+        Create counted ngrams dataset for given reference/s.
+        Inputs:
+        references -> list: list of refrences.
+        Output:
+        Counter(ds) -> dict: dictionary of counted n-grams
     """
     ds = []
     for ref in references:
         for n in range(1, len(ref.split()) + 1):
-            ng = set(make_ngrams(sentence=ref, n=n))
+            ng = make_ngrams(sentence=ref, n=n)
             if ng not in ds:
                 ds.extend(ng)
-    # print(Counter(ds))
     return Counter(ds)
 
 
-def cleaner(strings):
+def cleaner(strings: list):
+    """
+            remove punctuations from given sentence.
+            Inputs:
+            strings -> list: list of straings.
+            Output:
+            strings -> list: list of clean straings.
+        """
     for i in range(len(strings)):
-        strings[i] = re.sub(r'[^\w\s]', '', strings[i])
+        strings[i] = re.sub(r'[^\w\s]', '', strings[i]).strip()
     return strings
 
 
@@ -48,8 +58,7 @@ def precision(candidate, couted_ref_ngrams, n=1):
     count_clip = 0
     candidate_ngram = make_ngrams(sentence=candidate, n=n)
     candidate_ngram_counts = Counter(candidate_ngram)
-    for ngram in set(candidate_ngram):
-        # print(ngram)
+    for ngram in candidate_ngram:
         max_count = min(couted_ref_ngrams[ngram], candidate_ngram_counts[ngram])
         count_clip += min(max_count, candidate_ngram_counts[ngram])  # number of times matching canditate ngrams
     return count_clip / sum(candidate_ngram_counts.values())
@@ -66,38 +75,60 @@ def brevity_penalty(candidate_length, reference_length):
         return math.exp(1 - reference_length / candidate_length)
 
 
-c = "The quick brown fox jumps over the lazy dog."
-c = cleaner(strings=[c])[0]
-r = "A quick brown fox leaped over the lazy dog."
-refs = [r]
-ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
-# print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
+def calculate_bleu(candidate, counted_refrence, references, n=4):
+    import math
+    """
+    Calculate the BLEU score for a given candidate and list of references.
+    """
+    # Calculate the modified precision for each n-gram order
+    precisions = []
+    counter = n
+    for i in range(1, n + 1):
+        p_n = precision(candidate=candidate, couted_ref_ngrams=counted_refrence, n=i)
+        # print(p_n)
+        if p_n != 0:
+            precisions.append(p_n)
+        else:
+            counter -= 1
+    # Calculate the brevity penalty
+    bp = brevity_penalty(candidate_length=len(candidate.split()),
+                         reference_length=min(len(ref.split()) for ref in references))
+    # Calculate the BLEU score
+    weights = [1 / counter] * counter
+    bleu = bp * math.exp(sum(w * math.log(p) for w, p in zip(weights, precisions)))
+    return bleu, counter
 
-# print(make_ngrams(sentence=c, n=1))
+
+# unit test
+# print(make_ngrams(sentence=c, n=4))
 # done make_ngrams
 # print(make_ngrams_dataset_counted(references=[c]))
 # done make_ngram_dataset_counted
 # print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
 # done precision
+# print(brevity_penalty(candidate_length=len(r1), reference_length=len(c)))
+# done brevity penalty
+# print(calculate_bleu(candidate=c, counted_refrence=ref_ngram_ds, references=refs, n=4))
+# done calcualte bleu score
+# finish
 
-
-c = 'A cat sat on the mat'
+# test1
+c = "The quick brown fox jumps over the lazy dog."
 c = cleaner(strings=[c])[0]
-r1 = 'The cat is on the mat.'
-r2 = 'There is a cat on the mat.'
-refs = [r1, r2]
+r = "A quick brown fox leaped over the lazy dog."
+refs = [r]
 refs = cleaner(strings=refs)
 ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
-# print(modified_precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-# print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-# print(brevity_penalty(candidate_length=len(r1), reference_length=len(c)))
-# print(ref_ngram_ds)
-# c = 'the the the the the the the'
+bleu_score, ngram = calculate_bleu(candidate=c, counted_refrence=ref_ngram_ds, references=refs, n=4)
+print(f'BLEU Score: {bleu_score}\n n-grams from {1, ngram}')
+
+# test2
+# c = 'A cat sat on the mat'
 # c = cleaner(strings=[c])[0]
 # r1 = 'The cat is on the mat.'
 # r2 = 'There is a cat on the mat.'
 # refs = [r1, r2]
 # refs = cleaner(strings=refs)
 # ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
-# print(modified_precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-# print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
+# bleu_score, ngram = calculate_bleu(candidate=c, counted_refrence=ref_ngram_ds, references=refs, n=4)
+# print(f'BLEU Score: {bleu_score}\n n-grams from {1,ngram}')
