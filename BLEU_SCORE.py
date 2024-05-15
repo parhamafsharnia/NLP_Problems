@@ -43,7 +43,7 @@ def cleaner(strings):
 def precision(candidate, couted_ref_ngrams, n=1):
     """
     Calculate precision for a given candidate and list of references.
-    https://www.cl.uni-heidelberg.de/courses/ss15/smt/scribe8.pdf
+    https://thepythoncode.com/article/bleu-score-in-python
     """
     count_clip = 0
     candidate_ngram = make_ngrams(sentence=candidate, n=n)
@@ -53,6 +53,17 @@ def precision(candidate, couted_ref_ngrams, n=1):
         max_count = min(couted_ref_ngrams[ngram], candidate_ngram_counts[ngram])
         count_clip += min(max_count, candidate_ngram_counts[ngram])  # number of times matching canditate ngrams
     return count_clip / sum(candidate_ngram_counts.values())
+
+
+def brevity_penalty(candidate_length, reference_length):
+    import math
+    """
+    Calculate the brevity penalty for a given candidate and reference.
+    """
+    if candidate_length > reference_length:
+        return 1
+    else:
+        return math.exp(1 - reference_length / candidate_length)
 
 
 c = "The quick brown fox jumps over the lazy dog."
@@ -70,7 +81,6 @@ ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
 # done precision
 
 
-
 c = 'A cat sat on the mat'
 c = cleaner(strings=[c])[0]
 r1 = 'The cat is on the mat.'
@@ -79,8 +89,8 @@ refs = [r1, r2]
 refs = cleaner(strings=refs)
 ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
 # print(modified_precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-
+# print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
+# print(brevity_penalty(candidate_length=len(r1), reference_length=len(c)))
 # print(ref_ngram_ds)
 # c = 'the the the the the the the'
 # c = cleaner(strings=[c])[0]
@@ -91,6 +101,3 @@ print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
 # ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
 # print(modified_precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
 # print(precision(candidate=c, couted_ref_ngrams=ref_ngram_ds, n=1))
-
-
-
