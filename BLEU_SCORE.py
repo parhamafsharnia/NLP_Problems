@@ -1,4 +1,3 @@
-import numpy as np
 from collections import Counter
 import re
 
@@ -50,7 +49,7 @@ def cleaner(strings: list):
     return strings
 
 
-def precision(candidate, couted_ref_ngrams, n=1):
+def precision(candidate, counted_ref_ngrams, n=1):
     """
     Calculate precision for a given candidate and list of references.
     https://thepythoncode.com/article/bleu-score-in-python
@@ -58,9 +57,9 @@ def precision(candidate, couted_ref_ngrams, n=1):
     count_clip = 0
     candidate_ngram = make_ngrams(sentence=candidate, n=n)
     candidate_ngram_counts = Counter(candidate_ngram)
-    for ngram in candidate_ngram:
-        max_count = min(couted_ref_ngrams[ngram], candidate_ngram_counts[ngram])
-        count_clip += min(max_count, candidate_ngram_counts[ngram])  # number of times matching canditate ngrams
+    for ng in candidate_ngram:
+        matched = min(counted_ref_ngrams[ng], candidate_ngram_counts[ng])  # number of times matching canditate ngrams
+        count_clip += matched
     return count_clip / sum(candidate_ngram_counts.values())
 
 
@@ -75,7 +74,7 @@ def brevity_penalty(candidate_length, reference_length):
         return math.exp(1 - reference_length / candidate_length)
 
 
-def calculate_bleu(candidate, counted_refrence, references, n=4):
+def calculate_bleu(candidate, counted_reference, references, n=4):
     import math
     """
     Calculate the BLEU score for a given candidate and list of references.
@@ -84,13 +83,13 @@ def calculate_bleu(candidate, counted_refrence, references, n=4):
     precisions = []
     counter = n
     for i in range(1, n + 1):
-        p_n = precision(candidate=candidate, couted_ref_ngrams=counted_refrence, n=i)
-        # print(p_n)
+        p_n = precision(candidate=candidate, counted_ref_ngrams=counted_reference, n=i)
         if p_n != 0:
             precisions.append(p_n)
         else:
             counter -= 1
     # Calculate the brevity penalty
+    print(precisions)
     bp = brevity_penalty(candidate_length=len(candidate.split()),
                          reference_length=min(len(ref.split()) for ref in references))
     # Calculate the BLEU score
@@ -113,16 +112,16 @@ def calculate_bleu(candidate, counted_refrence, references, n=4):
 # finish
 
 # test1
-c = "The quick brown fox jumps over the lazy dog."
+c = "Thez quick brown fox jumps over the lazy dog."
 c = cleaner(strings=[c])[0]
 r = "A quick brown fox leaped over the lazy dog."
 refs = [r]
 refs = cleaner(strings=refs)
 ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
-bleu_score, ngram = calculate_bleu(candidate=c, counted_refrence=ref_ngram_ds, references=refs, n=4)
+bleu_score, ngram = calculate_bleu(candidate=c, counted_reference=ref_ngram_ds, references=refs, n=4)
 print(f'BLEU Score: {bleu_score}\n n-grams from {1, ngram}')
 
-# test2
+# # test2
 # c = 'A cat sat on the mat'
 # c = cleaner(strings=[c])[0]
 # r1 = 'The cat is on the mat.'
@@ -130,5 +129,5 @@ print(f'BLEU Score: {bleu_score}\n n-grams from {1, ngram}')
 # refs = [r1, r2]
 # refs = cleaner(strings=refs)
 # ref_ngram_ds = make_ngrams_dataset_counted(references=refs)
-# bleu_score, ngram = calculate_bleu(candidate=c, counted_refrence=ref_ngram_ds, references=refs, n=4)
-# print(f'BLEU Score: {bleu_score}\n n-grams from {1,ngram}')
+# bleu_score, ngram = calculate_bleu(candidate=c, counted_reference=ref_ngram_ds, references=refs, n=4)
+# print(f'BLEU Score: {bleu_score}\n n-grams from {1, ngram}')
